@@ -1,0 +1,89 @@
+{
+  "study_name": "polaris-adme-fang-hclint-1-baseline",
+  "max_trials": 40,
+  "launch": {
+    "base_params": {
+      "benchmark_id": "polaris/adme-fang-hclint-1",
+      "main_metric": "pearsonr",
+      "objective_mode": "maximize",
+      "task_type": "regression",
+      "run_id": "{trial_id}",
+      "outdir": "{work_dir}/polaris-adme-fang-hclint-1-results/{study_run_id}",
+      "prepare_container": "REPLACE_WITH_WAVE_DIGEST",
+      "model_container": "REPLACE_WITH_WAVE_DIGEST",
+      "grade_container": "REPLACE_WITH_WAVE_DIGEST",
+      "seed": 17
+    },
+    "run_name_template": "{study_name}-{study_run_id}-trial-{trial_number}",
+    "stub_run": false
+  },
+  "search_space": [
+    {
+      "name": "model_family",
+      "kind": "categorical",
+      "choices": [
+        "ridge",
+        "random_forest",
+        "hist_gradient_boosting"
+      ]
+    },
+    {
+      "name": "morgan_radius",
+      "kind": "int",
+      "low": 1,
+      "high": 4
+    },
+    {
+      "name": "morgan_bits",
+      "kind": "categorical",
+      "choices": [
+        512,
+        1024,
+        2048,
+        4096
+      ]
+    },
+    {
+      "name": "ridge_alpha",
+      "kind": "float",
+      "low": 0.001,
+      "high": 100.0,
+      "log": true
+    },
+    {
+      "name": "logistic_c",
+      "kind": "float",
+      "low": 0.001,
+      "high": 100.0,
+      "log": true
+    },
+    {
+      "name": "rf_n_estimators",
+      "kind": "int",
+      "low": 100,
+      "high": 800
+    },
+    {
+      "name": "hgb_learning_rate",
+      "kind": "float",
+      "low": 0.01,
+      "high": 0.5,
+      "log": true
+    }
+  ],
+  "objective": {
+    "result_path_template": "{work_dir}/polaris-adme-fang-hclint-1-results/{study_run_id}/{trial_id}/result.json",
+    "metric_key": "result.objective"
+  },
+  "study": {
+    "direction": "maximize",
+    "sampler": "tpe"
+  },
+  "poll_interval_seconds": 30.0,
+  "max_wait_hours": 2.0,
+  "metadata": {
+    "domain": "drug_discovery",
+    "biomlbench_task": "polarishub/polaris-adme-fang-hclint-1",
+    "hypothesis": "Tuning fingerprint resolution + estimator family lifts pearsonr on polaris/adme-fang-hclint-1 past the Morgan/sklearn baseline."
+  }
+}

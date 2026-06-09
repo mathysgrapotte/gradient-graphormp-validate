@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/gradient-evals/biomlbench-drug-polaris-adme-fang-hclint-1/main/nextflow_schema.json",
+  "title": "BioML-bench polaris/adme-fang-hclint-1 pipeline parameters",
+  "description": "Stimulus-ready baseline for the polaris/adme-fang-hclint-1 drug-discovery task.",
+  "type": "object",
+  "$defs": {
+    "task_identity": {
+      "title": "Task identity",
+      "type": "object",
+      "description": "Pinned constants that define the benchmark and its grader. Do not tune.",
+      "properties": {
+        "benchmark_id": {
+          "type": "string",
+          "default": "polaris/adme-fang-hclint-1",
+          "description": "Polaris/TDC benchmark id."
+        },
+        "main_metric": {
+          "type": "string",
+          "default": "pearsonr",
+          "description": "Polaris main metric, becomes result.objective."
+        },
+        "objective_mode": {
+          "type": "string",
+          "default": "maximize",
+          "enum": [
+            "minimize",
+            "maximize"
+          ],
+          "description": "Optimisation direction."
+        },
+        "task_type": {
+          "type": "string",
+          "default": "regression",
+          "enum": [
+            "regression",
+            "classification"
+          ],
+          "description": "Estimator head."
+        }
+      }
+    },
+    "run": {
+      "title": "Run / output",
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "default": "polaris_adme_fang_hclint_1_run",
+          "description": "Run identifier used to tag outputs."
+        },
+        "outdir": {
+          "type": "string",
+          "default": "results",
+          "description": "Output directory."
+        },
+        "publish_dir_mode": {
+          "type": "string",
+          "default": "copy",
+          "enum": [
+            "copy",
+            "symlink",
+            "link",
+            "rellink"
+          ]
+        }
+      }
+    },
+    "model": {
+      "title": "Baseline model surface (Stimulus search space)",
+      "type": "object",
+      "properties": {
+        "model_family": {
+          "type": "string",
+          "default": "ridge",
+          "enum": [
+            "ridge",
+            "random_forest",
+            "hist_gradient_boosting"
+          ],
+          "description": "Estimator family."
+        },
+        "morgan_radius": {
+          "type": "integer",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Morgan/ECFP radius."
+        },
+        "morgan_bits": {
+          "type": "integer",
+          "default": 1024,
+          "description": "Morgan fingerprint length."
+        },
+        "ridge_alpha": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Ridge L2 strength (regression)."
+        },
+        "logistic_c": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Logistic inverse-regularisation (classification)."
+        },
+        "rf_n_estimators": {
+          "type": "integer",
+          "default": 300,
+          "description": "Random-forest tree count."
+        },
+        "hgb_learning_rate": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Hist-gradient-boosting learning rate."
+        },
+        "seed": {
+          "type": "integer",
+          "default": 17,
+          "description": "Random seed."
+        }
+      }
+    },
+    "containers": {
+      "title": "Containers",
+      "type": "object",
+      "description": "Per-stage images. Build once via Wave (see README); swap per environment.",
+      "properties": {
+        "prepare_container": {
+          "type": "string",
+          "default": "gradient-evals/biomlbench-drug:latest"
+        },
+        "model_container": {
+          "type": "string",
+          "default": "gradient-evals/biomlbench-drug:latest"
+        },
+        "grade_container": {
+          "type": "string",
+          "default": "gradient-evals/biomlbench-drug:latest"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/$defs/task_identity"
+    },
+    {
+      "$ref": "#/$defs/run"
+    },
+    {
+      "$ref": "#/$defs/model"
+    },
+    {
+      "$ref": "#/$defs/containers"
+    }
+  ]
+}
