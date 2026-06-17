@@ -1,20 +1,28 @@
 {
   "study_name": "polaris-adme-fang-hclint-1-baseline",
   "max_trials": 40,
+  "seqera": {
+    "base_url": "https://cloud.seqera.io/api"
+  },
   "launch": {
+    "workspace_id": 206642224849181,
+    "compute_env_id": "7ixcJCruMupLSvjreShgVq",
+    "pipeline": "https://github.com/seqeralabs/gradient-drug-polaris-adme-fang-hclint-1-ml-bench.git",
+    "work_dir": "s3://seqera-eval-data-128997144437-eu-west-3/work",
+    "revision": "main",
     "base_params": {
       "benchmark_id": "polaris/adme-fang-hclint-1",
       "main_metric": "pearsonr",
       "objective_mode": "maximize",
       "task_type": "regression",
       "run_id": "{trial_id}",
-      "outdir": "{work_dir}/polaris-adme-fang-hclint-1-results/{study_run_id}",
-      "prepare_container": "REPLACE_WITH_WAVE_DIGEST",
-      "model_container": "REPLACE_WITH_WAVE_DIGEST",
-      "grade_container": "REPLACE_WITH_WAVE_DIGEST",
+      "outdir": "s3://seqera-eval-data-128997144437-eu-west-3/work/polaris-adme-fang-hclint-1-results/{study_run_id}",
+      "prepare_container": "wave.seqera.io/wt/03cb7651bccf/wave/build:e93f67e91ae6d85b",
+      "model_container": "wave.seqera.io/wt/03cb7651bccf/wave/build:e93f67e91ae6d85b",
+      "grade_container": "wave.seqera.io/wt/03cb7651bccf/wave/build:e93f67e91ae6d85b",
       "seed": 17
     },
-    "run_name_template": "{study_name}-{study_run_id}-trial-{trial_number}",
+    "run_name_template": "hclint-baseline-{study_run_id}-t{trial_number}",
     "stub_run": false
   },
   "search_space": [
@@ -72,7 +80,7 @@
     }
   ],
   "objective": {
-    "result_path_template": "{work_dir}/polaris-adme-fang-hclint-1-results/{study_run_id}/{trial_id}/result.json",
+    "result_path_template": "s3://seqera-eval-data-128997144437-eu-west-3/work/polaris-adme-fang-hclint-1-results/{study_run_id}/{trial_id}/result.json",
     "metric_key": "result.objective"
   },
   "study": {
