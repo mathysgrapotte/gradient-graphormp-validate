@@ -11,14 +11,18 @@ Minimal, Stimulus-ready Nextflow pipeline for one BioML-bench evaluation:
 | Baseline | Morgan/ECFP fingerprints + scikit-learn (regression) |
 
 Part of the [Gradient-evals](../README.md) collection. Same shape as every other
-pipeline: `PREPARE_TASK_DATA → FIT_BASELINE_MODEL → SCORE_SUBMISSION`, graded by
-the **official Polaris grader** so the objective is leaderboard-comparable.
+pipeline: `PREPARE_TASK_DATA → FIT_BASELINE_MODEL → SCORE_SUBMISSION`. The dataset
+is prepared+pinned once off-pipeline (`scripts/prepare_and_upload_data.py`) to an
+immutable, content-addressed S3 prefix; the pipeline only stages+validates it.
+The model stage sees `public/{train,test_features,sample_submission}.csv` only;
+the held-out answers live on a grader-only channel and are never staged into the
+model task, so test labels are unreachable from `train_predict.py` by construction.
 
 ## Run it
 
 ```bash
-# local, container-free (needs polaris-lib, rdkit, scikit-learn on PATH)
-nextflow run . -profile test --outdir results
+# local, container-free (needs rdkit, scikit-learn, scipy, pandas on PATH)
+nextflow run . -profile test --outdir results --dataset_s3_prefix /path/to/local/dataset
 cat results/*/result.json     # -> result.objective
 
 # cloud / Stimulus

@@ -1,63 +1,107 @@
 #!/usr/bin/env python3
-"""Materialise a Polaris/TDC drug-discovery task into the BioML-bench file contract.
+"""Stage and validate a pre-prepared, immutable drug-discovery task dataset.
 
-Mirrors ``biomlbench`` ``prepare.py`` for Polaris tasks, but self-contained:
-it loads the benchmark directly from Polaris Hub (anonymous) and writes the
-public split the model trains on. Test labels stay hidden inside Polaris and
-are scored later by ``grade_submission.py`` via ``benchmark.evaluate`` — the
-exact grader BioML-bench uses, so the objective is leaderboard-comparable.
+The task data is materialised ONCE off-pipeline (``biomlbench prepare`` +
+``scripts/prepare_and_upload_data.py``) and pinned to an immutable, versioned
+S3 prefix. This script no longer touches Polaris Hub and no longer computes the
+train/test split at runtime: it only locates, validates and stages the already
+pinned artefacts so the contract is identical on every run.
 
-Outputs (under ``--public-dir``):
-  - train.csv            molecule_col, target_col
-  - test_features.csv    id, molecule_col   (test order is fixed by Polaris)
-  - sample_submission.csv id, target_col    (the submission schema)
+The dataset prefix (mounted via ``--data-dir``) holds::
+
+    public/train.csv             molecule_col, target_col   (TRAIN labels only)
+    public/test_features.csv     id, molecule_col           (NO labels)
+    public/sample_submission.csv id, target_col             (dummy values)
+    private/answers.csv          id, target_col             (TRUE test labels)
+
+This script copies the public inputs into ``--public-dir`` (the only thing the
+model stage ever sees) and the private answers to ``--answers`` (the only thing
+the grade stage ever sees). It fails loudly if anything is missing so a bad data
+mount can never silently produce a degenerate score.
 """
 from __future__ import annotations
 
 import argparse
+import shutil
 from pathlib import Path
 
-import pandas as pd
-import polaris as po
+REQUIRED_PUBLIC = (
+    "train.csv",
+    "test_features.csv",
+    "sample_submission.csv",
+)
 
 
 def parse_args() -> argparse.Namespace:
     """Parse CLI flags."""
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--benchmark-id", required=True, help="e.g. tdcommons/caco2-wang")
-    p.add_argument("--public-dir", required=True, type=Path)
+    p.add_argument("--data-dir", required=True, type=Path,
+                   help="Pinned dataset prefix (holds public/ and private/answers.csv)")
+    p.add_argument("--public-dir", required=True, type=Path,
+                   help="Destination dir for the staged public inputs (model-visible)")
+    p.add_argument("--answers", required=True, type=Path,
+                   help="Destination path for the staged private answers.csv (grader-only)")
     return p.parse_args()
 
 
+def locate_prepared(data_dir: Path) -> tuple[Path, Path]:
+    """Return (public_dir, answers_csv) inside a pinned dataset tree.
+
+    Accepts the dataset-version root, its ``prepared/`` subdir, or a dir that
+    already holds ``public/`` and ``private/answers.csv`` directly.
+
+    Raises:
+        FileNotFoundError: if a public dir or answers.csv cannot be found.
+    """
+    if not data_dir.is_dir():
+        raise FileNotFoundError(f"--data-dir is not a directory: {data_dir}")
+
+    candidates = [data_dir, data_dir / "prepared"]
+    for base in candidates:
+        public = base / "public"
+        answers = base / "private" / "answers.csv"
+        if public.is_dir() and answers.is_file():
+            return public, answers
+        # Some prepared trees place answers.csv next to public/.
+        answers_flat = base / "answers.csv"
+        if public.is_dir() and answers_flat.is_file():
+            return public, answers_flat
+
+    raise FileNotFoundError(
+        f"could not find public/ + private/answers.csv under {data_dir} "
+        f"(looked in {[str(c) for c in candidates]}); "
+        "stage the dataset with scripts/prepare_and_upload_data.py first"
+    )
+
+
+def validate_public(public: Path) -> None:
+    """Check every required public input exists.
+
+    Raises:
+        FileNotFoundError: if any required file is missing.
+    """
+    missing = [name for name in REQUIRED_PUBLIC if not (public / name).is_file()]
+    if missing:
+        raise FileNotFoundError(
+            f"pinned public dir {public} is missing required files: {missing}"
+        )
+
+
 def main() -> None:
-    """Download the benchmark and write the public training contract."""
+    """Locate, validate and stage the pinned task artefacts."""
     args = parse_args()
-    public = args.public_dir
-    public.mkdir(parents=True, exist_ok=True)
 
-    benchmark = po.load_benchmark(args.benchmark_id)
-    molecule_col = list(benchmark.input_cols)[0]
-    target_col = list(benchmark.target_cols)[0]
+    src_public, src_answers = locate_prepared(args.data_dir)
+    validate_public(src_public)
 
-    train, test = benchmark.get_train_test_split()
+    args.public_dir.mkdir(parents=True, exist_ok=True)
+    for name in REQUIRED_PUBLIC:
+        shutil.copy(src_public / name, args.public_dir / name)
 
-    train_x = [train[i][0] for i in range(len(train))]
-    train_y = [train[i][1] for i in range(len(train))]
-    pd.DataFrame({molecule_col: train_x, target_col: train_y}).to_csv(
-        public / "train.csv", index=False
-    )
+    shutil.copy(src_answers, args.answers)
 
-    test_x = [test[i] for i in range(len(test))]
-    pd.DataFrame({"id": range(len(test_x)), molecule_col: test_x}).to_csv(
-        public / "test_features.csv", index=False
-    )
-
-    pd.DataFrame({"id": range(len(test_x)), target_col: [0.0] * len(test_x)}).to_csv(
-        public / "sample_submission.csv", index=False
-    )
-
-    print(f"prepared {args.benchmark_id}: {len(train_x)} train, {len(test_x)} test")
-    print(f"molecule_col={molecule_col} target_col={target_col}")
+    print(f"staged public inputs -> {args.public_dir} ({REQUIRED_PUBLIC})")
+    print(f"staged private answers -> {args.answers}")
 
 
 if __name__ == "__main__":

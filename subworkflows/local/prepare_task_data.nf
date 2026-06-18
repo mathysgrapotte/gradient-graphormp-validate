@@ -1,12 +1,14 @@
 //
-// PREPARE_TASK_DATA: download the Polaris benchmark and write the public
-// training contract (train.csv, test_features.csv, sample_submission.csv).
+// PREPARE_TASK_DATA: stage and validate the pinned, immutable dataset prefix.
+// Emits the public training contract (train.csv, test_features.csv,
+// sample_submission.csv) for the model and a separate private answers.csv that
+// is wired ONLY into the grade stage.
 //
 include { PREPARE_TASK_DATA as PREPARE_TASK_DATA_MODULE } from '../../modules/local/prepare_task_data'
 
 workflow PREPARE_TASK_DATA {
     take:
-    ch_task   // tuple(meta, benchmark_id)
+    ch_task   // tuple(meta, data_dir)
 
     main:
     ch_versions = channel.empty()
@@ -16,5 +18,6 @@ workflow PREPARE_TASK_DATA {
 
     emit:
     public_data = PREPARE_TASK_DATA_MODULE.out.public_data
+    answers     = PREPARE_TASK_DATA_MODULE.out.answers
     versions    = ch_versions
 }

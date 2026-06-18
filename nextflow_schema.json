@@ -40,6 +40,18 @@
         }
       }
     },
+    "data": {
+      "title": "Data",
+      "type": "object",
+      "description": "Pinned, immutable dataset prefix. Staged+validated, never split at runtime.",
+      "properties": {
+        "dataset_s3_prefix": {
+          "type": "string",
+          "default": "s3://seqera-eval-data-128997144437-eu-west-3/data/drug/polaris-adme-fang-hclint-1/v1-90489b8d",
+          "description": "Versioned, content-addressed S3 prefix holding public/ + private/answers.csv."
+        }
+      }
+    },
     "run": {
       "title": "Run / output",
       "type": "object",
@@ -142,6 +154,9 @@
   "allOf": [
     {
       "$ref": "#/$defs/task_identity"
+    },
+    {
+      "$ref": "#/$defs/data"
     },
     {
       "$ref": "#/$defs/run"

@@ -15,6 +15,7 @@
       "main_metric": "pearsonr",
       "objective_mode": "maximize",
       "task_type": "regression",
+      "dataset_s3_prefix": "s3://seqera-eval-data-128997144437-eu-west-3/data/drug/polaris-adme-fang-hclint-1/v1-90489b8d",
       "run_id": "{trial_id}",
       "outdir": "s3://seqera-eval-data-128997144437-eu-west-3/work/polaris-adme-fang-hclint-1-results/{study_run_id}",
       "prepare_container": "wave.seqera.io/wt/03cb7651bccf/wave/build:e93f67e91ae6d85b",

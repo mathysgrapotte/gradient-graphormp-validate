@@ -5,10 +5,11 @@
  * metric and direction are set by params (see nextflow.config / nextflow_schema.json).
  *
  * One run = one parameter assignment, the contract Stimulus optimises over.
- * The pipeline downloads the Polaris benchmark, fits a baseline molecular-
- * property model, predicts the test split, and grades the submission with the
- * official Polaris grader. The single objective is written to result.json under
- * result.objective (objective_mode says whether to minimise or maximise it).
+ * The pipeline stages a pinned, immutable dataset prefix from S3 (train +
+ * test_features, no test labels), fits a baseline molecular-property model,
+ * predicts the test split, and grades the submission against the pinned private
+ * answers. The single objective is written to result.json under result.objective
+ * (objective_mode says whether to minimise or maximise it).
  *
  * This is a deliberately-minimal *base* pipeline: the Gradient autonomous loop
  * and Stimulus search the model knobs exposed in nextflow_schema.json to push
@@ -31,6 +32,7 @@ workflow {
     main_metric       = params.main_metric
     objective_mode    = params.objective_mode
     task_type         = params.task_type
+    dataset_s3_prefix = params.dataset_s3_prefix
     model_family      = params.model_family
     morgan_radius     = params.morgan_radius
     morgan_bits       = params.morgan_bits
@@ -40,15 +42,17 @@ workflow {
     hgb_learning_rate = params.hgb_learning_rate
     seed              = params.seed
 
-    ch_task = channel.of(tuple([id: run_id], benchmark_id))
+    ch_task = channel.of(tuple([id: run_id], file(dataset_s3_prefix)))
 
     // ----------------------------
     // Pipeline run
     // ----------------------------
 
     /*
-    Download the Polaris benchmark and write the public training contract
-    (train.csv, test_features.csv, sample_submission.csv).
+    Stage and validate the pinned, immutable dataset prefix from S3 (Fusion):
+    copy the public training contract (train.csv, test_features.csv,
+    sample_submission.csv) for the model and the private answers.csv for the
+    grader only.
     */
     PREPARE_TASK_DATA(ch_task)
 
@@ -70,11 +74,12 @@ workflow {
     )
 
     /*
-    Grade the submission with the official Polaris grader and write the
-    Stimulus-facing result.json (result.objective = mean_absolute_error).
+    Grade the submission against the pinned private answers and write the
+    Stimulus-facing result.json (result.objective = main_metric).
     */
     SCORE_SUBMISSION(
         FIT_BASELINE_MODEL.out.submission,
+        PREPARE_TASK_DATA.out.answers,
         benchmark_id,
         main_metric,
         objective_mode,

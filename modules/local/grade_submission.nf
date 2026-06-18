@@ -5,7 +5,7 @@ process GRADE_SUBMISSION {
     container "${params.grade_container}"
 
     input:
-    tuple val(meta), path(submission)
+    tuple val(meta), path(submission), path(answers)
     val benchmark_id
     val main_metric
     val objective_mode
@@ -19,6 +19,7 @@ process GRADE_SUBMISSION {
     """
     grade_submission.py \\
         --submission ${submission} \\
+        --answers ${answers} \\
         --benchmark-id ${benchmark_id} \\
         --main-metric ${main_metric} \\
         --objective-mode ${objective_mode} \\
@@ -28,7 +29,8 @@ process GRADE_SUBMISSION {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python3 --version | sed 's/Python //')
-        polaris: \$(pip show polaris-lib 2>/dev/null | sed -n 's/^Version: //p')
+        scikit-learn: \$(pip show scikit-learn 2>/dev/null | sed -n 's/^Version: //p')
+        pandas: \$(pip show pandas 2>/dev/null | sed -n 's/^Version: //p')
     END_VERSIONS
     """
 }
