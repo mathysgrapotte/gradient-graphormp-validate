@@ -4,7 +4,7 @@
 // sample_submission.csv) for the model and a separate private answers.csv that
 // is wired ONLY into the grade stage.
 //
-include { PREPARE_TASK_DATA as PREPARE_TASK_DATA_MODULE } from '../../modules/local/prepare_task_data'
+include { PREPARE_TASK_DATA as PREPARE_TASK_DATA_MODULE } from '../../modules/local/prepare_task_data/main'
 
 workflow PREPARE_TASK_DATA {
     take:

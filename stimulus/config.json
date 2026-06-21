@@ -1,5 +1,5 @@
 {
-  "study_name": "polaris-adme-fang-hclint-1-baseline",
+  "study_name": "polaris-adme-fang-hclint-1-graphormp",
   "max_trials": 40,
   "seqera": {
     "base_url": "https://cloud.seqera.io/api"
@@ -9,75 +9,98 @@
     "compute_env_id": "7ixcJCruMupLSvjreShgVq",
     "pipeline": "https://github.com/seqeralabs/gradient-drug-polaris-adme-fang-hclint-1-ml-bench.git",
     "work_dir": "s3://seqera-eval-data-128997144437-eu-west-3/work",
-    "revision": "main",
+    "revision": "gradient/gradient-20260619T132219Z-graphormp",
     "base_params": {
       "benchmark_id": "polaris/adme-fang-hclint-1",
       "main_metric": "pearsonr",
       "objective_mode": "maximize",
       "task_type": "regression",
       "dataset_s3_prefix": "s3://seqera-eval-data-128997144437-eu-west-3/data/drug/polaris-adme-fang-hclint-1/v1-90489b8d",
+      "model_family": "graphormer",
+      "morgan_radius": 2,
+      "morgan_bits": 1024,
       "run_id": "{trial_id}",
       "outdir": "s3://seqera-eval-data-128997144437-eu-west-3/work/polaris-adme-fang-hclint-1-results/{study_run_id}",
-      "prepare_container": "wave.seqera.io/wt/03cb7651bccf/wave/build:e93f67e91ae6d85b",
-      "model_container": "wave.seqera.io/wt/03cb7651bccf/wave/build:e93f67e91ae6d85b",
-      "grade_container": "wave.seqera.io/wt/03cb7651bccf/wave/build:e93f67e91ae6d85b",
+      "prepare_container": "community.wave.seqera.io/library/hclint-graphormp:1dd0688825d0a4f4",
+      "model_container": "community.wave.seqera.io/library/hclint-graphormp:1dd0688825d0a4f4",
+      "grade_container": "community.wave.seqera.io/library/hclint-graphormp:1dd0688825d0a4f4",
       "seed": 17
     },
-    "run_name_template": "hclint-baseline-{study_run_id}-t{trial_number}",
+    "run_name_template": "graphormp-{study_run_id}-t{trial_number}",
     "stub_run": false
   },
   "search_space": [
     {
-      "name": "model_family",
+      "name": "gr_finetune_mode",
       "kind": "categorical",
       "choices": [
-        "ridge",
-        "random_forest",
-        "hist_gradient_boosting"
+        "frozen",
+        "full",
+        "lpft"
       ]
     },
     {
-      "name": "morgan_radius",
+      "name": "gr_head",
+      "kind": "categorical",
+      "choices": [
+        "linear",
+        "mlp"
+      ]
+    },
+    {
+      "name": "gr_lr",
+      "kind": "float",
+      "low": 1e-05,
+      "high": 0.003,
+      "log": true
+    },
+    {
+      "name": "gr_epochs",
+      "kind": "int",
+      "low": 2,
+      "high": 12
+    },
+    {
+      "name": "gr_ensemble",
       "kind": "int",
       "low": 1,
       "high": 4
     },
     {
-      "name": "morgan_bits",
+      "name": "gr_batch_size",
       "kind": "categorical",
       "choices": [
-        512,
-        1024,
-        2048,
-        4096
+        8,
+        16,
+        32
       ]
     },
     {
-      "name": "ridge_alpha",
+      "name": "gr_weight_decay",
       "kind": "float",
-      "low": 0.001,
-      "high": 100.0,
+      "low": 1e-06,
+      "high": 0.1,
       "log": true
     },
     {
-      "name": "logistic_c",
+      "name": "gr_head_dropout",
       "kind": "float",
-      "low": 0.001,
-      "high": 100.0,
-      "log": true
+      "low": 0.0,
+      "high": 0.5
     },
     {
-      "name": "rf_n_estimators",
+      "name": "gr_freeze_layers",
       "kind": "int",
-      "low": 100,
-      "high": 800
+      "low": 0,
+      "high": 12
     },
     {
-      "name": "hgb_learning_rate",
-      "kind": "float",
-      "low": 0.01,
-      "high": 0.5,
-      "log": true
+      "name": "gr_fuse_descriptors",
+      "kind": "categorical",
+      "choices": [
+        "off",
+        "on"
+      ]
     }
   ],
   "objective": {
@@ -89,10 +112,11 @@
     "sampler": "tpe"
   },
   "poll_interval_seconds": 30.0,
-  "max_wait_hours": 2.0,
+  "max_wait_hours": 4.0,
   "metadata": {
     "domain": "drug_discovery",
     "biomlbench_task": "polarishub/polaris-adme-fang-hclint-1",
-    "hypothesis": "Tuning fingerprint resolution + estimator family lifts pearsonr on polaris/adme-fang-hclint-1 past the Morgan/sklearn baseline."
+    "arm": "pcqm4mv2-pretrained-graphormer-finetune",
+    "hypothesis": "A PCQM4Mv2-pretrained Graphormer fine-tuned (frozen/full/LP-FT) with seed ensembling and optional engineered-descriptor fusion can match or edge the ~0.793 plateau on polaris/adme-fang-hclint-1; pretraining is the key difference from the from-scratch graph transformer."
   }
 }

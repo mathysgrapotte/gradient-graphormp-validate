@@ -42,6 +42,18 @@ workflow {
     hgb_learning_rate = params.hgb_learning_rate
     seed              = params.seed
 
+    // Pretrained-Graphormer fine-tune knobs (the 'graphormer' arm's search space)
+    gr_finetune_mode    = params.gr_finetune_mode
+    gr_head             = params.gr_head
+    gr_lr               = params.gr_lr
+    gr_epochs           = params.gr_epochs
+    gr_ensemble         = params.gr_ensemble
+    gr_batch_size       = params.gr_batch_size
+    gr_weight_decay     = params.gr_weight_decay
+    gr_head_dropout     = params.gr_head_dropout
+    gr_freeze_layers    = params.gr_freeze_layers
+    gr_fuse_descriptors = params.gr_fuse_descriptors
+
     ch_task = channel.of(tuple([id: run_id], file(dataset_s3_prefix)))
 
     // ----------------------------
@@ -70,6 +82,16 @@ workflow {
         logistic_c,
         rf_n_estimators,
         hgb_learning_rate,
+        gr_finetune_mode,
+        gr_head,
+        gr_lr,
+        gr_epochs,
+        gr_ensemble,
+        gr_batch_size,
+        gr_weight_decay,
+        gr_head_dropout,
+        gr_freeze_layers,
+        gr_fuse_descriptors,
         seed,
     )
 

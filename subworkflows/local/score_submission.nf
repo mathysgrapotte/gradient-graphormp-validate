@@ -2,7 +2,7 @@
 // SCORE_SUBMISSION: grade the submission against the pinned private answers and
 // write the Stimulus-facing result.json (result.objective).
 //
-include { GRADE_SUBMISSION } from '../../modules/local/grade_submission'
+include { GRADE_SUBMISSION } from '../../modules/local/grade_submission/main'
 
 workflow SCORE_SUBMISSION {
     take:

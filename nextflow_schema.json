@@ -88,9 +88,10 @@
           "enum": [
             "ridge",
             "random_forest",
-            "hist_gradient_boosting"
+            "hist_gradient_boosting",
+            "graphormer"
           ],
-          "description": "Estimator family."
+          "description": "Model module: classical Morgan/sklearn baseline, or 'graphormer' (PCQM4Mv2-pretrained graph-transformer fine-tune)."
         },
         "morgan_radius": {
           "type": "integer",
@@ -131,22 +132,105 @@
         }
       }
     },
+    "graphormer": {
+      "title": "Pretrained-Graphormer fine-tune surface (Stimulus search space)",
+      "type": "object",
+      "description": "Knobs for the 'graphormer' arm: a PCQM4Mv2-pretrained graph transformer fine-tuned on the target. Active only when model_family == 'graphormer'.",
+      "properties": {
+        "gr_finetune_mode": {
+          "type": "string",
+          "default": "lpft",
+          "enum": [
+            "frozen",
+            "full",
+            "lpft"
+          ],
+          "description": "Fine-tuning regime: frozen featuriser + head, full end-to-end, or linear-probe-then-fine-tune (LP-FT)."
+        },
+        "gr_head": {
+          "type": "string",
+          "default": "mlp",
+          "enum": [
+            "linear",
+            "mlp"
+          ],
+          "description": "Prediction head on the graph-token embedding."
+        },
+        "gr_lr": {
+          "type": "number",
+          "default": 1e-4,
+          "description": "Fine-tune learning rate (AdamW)."
+        },
+        "gr_epochs": {
+          "type": "integer",
+          "default": 6,
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Fine-tune epochs (end-to-end phase)."
+        },
+        "gr_ensemble": {
+          "type": "integer",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 4,
+          "description": "Number of seed-averaged ensemble members."
+        },
+        "gr_batch_size": {
+          "type": "integer",
+          "default": 16,
+          "enum": [
+            8,
+            16,
+            32
+          ],
+          "description": "Mini-batch size."
+        },
+        "gr_weight_decay": {
+          "type": "number",
+          "default": 1e-2,
+          "description": "AdamW weight decay."
+        },
+        "gr_head_dropout": {
+          "type": "number",
+          "default": 0.1,
+          "minimum": 0.0,
+          "maximum": 0.6,
+          "description": "Dropout in the prediction head."
+        },
+        "gr_freeze_layers": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 12,
+          "description": "Freeze the bottom N of 12 transformer layers (gradual unfreezing)."
+        },
+        "gr_fuse_descriptors": {
+          "type": "string",
+          "default": "off",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "description": "Fuse Morgan fingerprints + RDKit 2D descriptors with the graph embedding before the head."
+        }
+      }
+    },
     "containers": {
       "title": "Containers",
       "type": "object",
-      "description": "Per-stage images. Build once via Wave (see README); swap per environment.",
+      "description": "Single durable community.wave.seqera.io image (built from conda/environment.yml) with the PCQM4Mv2 Graphormer checkpoint + compiled spatial-encoding extension baked in. Stimulus overrides per study.",
       "properties": {
         "prepare_container": {
           "type": "string",
-          "default": "gradient-evals/biomlbench-drug:latest"
+          "default": "community.wave.seqera.io/library/hclint-graphormp:1dd0688825d0a4f4"
         },
         "model_container": {
           "type": "string",
-          "default": "gradient-evals/biomlbench-drug:latest"
+          "default": "community.wave.seqera.io/library/hclint-graphormp:1dd0688825d0a4f4"
         },
         "grade_container": {
           "type": "string",
-          "default": "gradient-evals/biomlbench-drug:latest"
+          "default": "community.wave.seqera.io/library/hclint-graphormp:1dd0688825d0a4f4"
         }
       }
     }
@@ -163,6 +247,9 @@
     },
     {
       "$ref": "#/$defs/model"
+    },
+    {
+      "$ref": "#/$defs/graphormer"
     },
     {
       "$ref": "#/$defs/containers"
